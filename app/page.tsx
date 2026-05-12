@@ -265,8 +265,12 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 px-4 bg-white">
-        <div className="container mx-auto">
+      <section className="py-24 px-4 bg-gray-50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
+          <div className="absolute top-10 left-10 w-64 h-64 bg-indigo-600 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-600 rounded-full blur-3xl"></div>
+        </div>
+        <div className="container mx-auto relative">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
               Join Our Lithuanian-English Learning Community
@@ -276,26 +280,68 @@ export default function HomePage() {
               See what makes us the premier choice for this language pair.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { number: "5,000+", label: "Active Learners", icon: Users, color: "from-blue-500 to-cyan-500" },
-              { number: "2", label: "Specialized Languages", icon: Languages, color: "from-green-500 to-emerald-500" },
-              { number: "8", label: "Expert Courses", icon: Award, color: "from-purple-500 to-pink-500" },
-              { number: "96%", label: "Success Rate", icon: TrendingUp, color: "from-orange-500 to-red-500" }
-            ].map((stat, index) => (
-              <div key={index} className="group">
-                <div className={`w-16 h-16 bg-gradient-to-r ${stat.color} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                  <stat.icon className="h-8 w-8 text-white" />
+              { label: 'Active Learners', value: '5,000+', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+              { label: 'Specialized Languages', value: '2', icon: Languages, color: 'text-green-600', bg: 'bg-green-100' },
+              { label: 'Expert Courses', value: '8', icon: GraduationCap, color: 'text-purple-600', bg: 'bg-purple-100' },
+              { label: 'Success Rate', value: '96%', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' }
+            ].map((stat, i) => (
+              <div key={i} className="text-center p-8 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <div className={`w-16 h-16 ${stat.bg} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                  <stat.icon className={`h-8 w-8 ${stat.color}`} />
                 </div>
-                <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform text-gray-900">
-                  {stat.number}
-                </div>
-                <div className="text-lg text-gray-600">
-                  {stat.label}
-                </div>
+                <div className="text-4xl font-bold text-gray-900 mb-2">{stat.value}</div>
+                <div className="text-gray-600 font-medium">{stat.label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Language Proficiency Levels Section */}
+      <section className="py-24 px-4 bg-white">
+        <div className="container mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            <div className="lg:w-1/2">
+              <h2 className="text-4xl font-bold text-gray-900 mb-8 leading-tight">
+                Structured Learning for <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                  Every Level of Mastery
+                </span>
+              </h2>
+              <p className="text-xl text-gray-600 mb-10 leading-relaxed">
+                Whether you're speaking your first Lithuanian words or mastering complex English grammar, 
+                our platform follows the international standard to ensure your progress is measurable and real.
+              </p>
+              <div className="space-y-6">
+                {[
+                  { level: 'A1-A2', title: 'Beginner', desc: 'Build your foundation with basic vocabulary and essential everyday phrases.' },
+                  { level: 'B1-B2', title: 'Intermediate', desc: 'Achieve independence in communication and handle most travel situations.' },
+                  { level: 'C1-C2', title: 'Advanced', desc: 'Master the nuances of the language for professional and academic success.' }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 p-4 rounded-xl hover:bg-indigo-50 transition-colors border border-transparent hover:border-indigo-100">
+                    <div className="shrink-0 w-12 h-12 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold">
+                      {item.level}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">{item.title}</h4>
+                      <p className="text-gray-600">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="lg:w-1/2 grid grid-cols-2 gap-4">
+              <div className="space-y-4 pt-8">
+                <img src="https://images.unsplash.com/photo-1523240715632-d984bc4b7906?w=400&h=500&fit=crop" className="rounded-2xl shadow-lg w-full object-cover h-64" alt="" />
+                <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&h=400&fit=crop" className="rounded-2xl shadow-lg w-full object-cover h-48" alt="" />
+              </div>
+              <div className="space-y-4">
+                <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=400&fit=crop" className="rounded-2xl shadow-lg w-full object-cover h-48" alt="" />
+                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=500&fit=crop" className="rounded-2xl shadow-lg w-full object-cover h-64" alt="" />
+              </div>
+            </div>
           </div>
         </div>
       </section>

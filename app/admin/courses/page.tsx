@@ -1,272 +1,200 @@
 "use client"
 
-
-
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Search, Eye, Trash2, BookOpen } from "lucide-react"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/hooks/use-auth"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Trash2, BookOpen, Eye, EyeOff, Search, ExternalLink } from "lucide-react"
+import { toast } from "sonner"
+import Link from "next/link"
 
 interface Course {
   _id: string
   title: string
-  description: string
-  teacher: {
-    username: string
-    email: string
-  }
-  lessonsCount: number
-  enrolledStudents: number
+  teacherName: string
+  category: string
+  difficulty: string
   isPublished: boolean
-  createdAt: string
-  updatedAt: string
+  enrolledStudents: number
+  thumbnail: string
 }
 
-export default function AdminCoursesPage() {
+export default function ManageCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
-  const [filteredCourses, setFilteredCourses] = useState<Course[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
   const { token } = useAuth()
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await fetch("/api/admin/courses", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setCourses(data.courses || [])
-          setFilteredCourses(data.courses || [])
-        }
-      } catch (error) {
-        console.error("Error fetching courses:", error)
-      } finally {
-        setIsLoading(false)
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch("/api/admin/courses", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setCourses(data.data.courses || [])
       }
+    } catch (error) {
+      console.error("Error fetching courses:", error)
+      toast.error("Failed to load courses")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    if (token) {
-      fetchCourses()
-    }
+  useEffect(() => {
+    if (token) fetchCourses()
   }, [token])
 
-  useEffect(() => {
-    let filtered = courses
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (course) =>
-          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          course.teacher.username.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+  const handleTogglePublish = async (courseId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch("/api/admin/courses", {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ courseId, isPublished: !currentStatus })
+      })
+      if (response.ok) {
+        toast.success(`Course ${!currentStatus ? "published" : "unpublished"} successfully`)
+        fetchCourses()
+      }
+    } catch (error) {
+      toast.error("Failed to update course status")
     }
-
-    if (statusFilter !== "all") {
-      const isPublished = statusFilter === "published"
-      filtered = filtered.filter((course) => course.isPublished === isPublished)
-    }
-
-    setFilteredCourses(filtered)
-  }, [courses, searchTerm, statusFilter])
+  }
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (!confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
-      return
-    }
+    if (!confirm("Are you sure you want to delete this course? This action cannot be undone.")) return
 
     try {
-      const response = await fetch(`/api/courses/${courseId}`, {
+      const response = await fetch(`/api/admin/courses?courseId=${courseId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` }
       })
-
       if (response.ok) {
-        setCourses(courses.filter((course) => course._id !== courseId))
+        toast.success("Course deleted successfully")
+        fetchCourses()
       }
     } catch (error) {
-      console.error("Error deleting course:", error)
+      toast.error("Failed to delete course")
     }
   }
 
-  const togglePublishStatus = async (courseId: string, currentStatus: boolean) => {
-    try {
-      const response = await fetch(`/api/courses/${courseId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          isPublished: !currentStatus,
-        }),
-      })
-
-      if (response.ok) {
-        setCourses(
-          courses.map((course) => (course._id === courseId ? { ...course, isPublished: !currentStatus } : course)),
-        )
-      }
-    } catch (error) {
-      console.error("Error updating course status:", error)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading courses...</p>
-        </div>
-      </div>
-    )
-  }
+  const filteredCourses = courses.filter(course => 
+    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.teacherName.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Link href="/admin/dashboard">
-            <Button variant="ghost" className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Course Management</h1>
-          <p className="text-gray-600">Oversee all courses on the platform</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Courses</h1>
+            <p className="text-gray-600">Review, moderate, and manage all platform content</p>
+          </div>
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Search courses..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  All Courses ({filteredCourses.length})
-                </CardTitle>
-                <CardDescription>View and manage all courses</CardDescription>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-4 mt-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search courses..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Lessons</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCourses.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        No courses found
-                      </TableCell>
-                    </TableRow>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600">Course</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600">Teacher</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600">Students</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {isLoading ? (
+                    [...Array(5)].map((_, i) => (
+                      <tr key={i}>
+                        <td className="px-6 py-4"><Skeleton className="h-10 w-48" /></td>
+                        <td className="px-6 py-4"><Skeleton className="h-6 w-32" /></td>
+                        <td className="px-6 py-4"><Skeleton className="h-6 w-16" /></td>
+                        <td className="px-6 py-4"><Skeleton className="h-6 w-20" /></td>
+                        <td className="px-6 py-4"><Skeleton className="h-8 w-24 ml-auto" /></td>
+                      </tr>
+                    ))
+                  ) : filteredCourses.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-500">No courses found</td>
+                    </tr>
                   ) : (
                     filteredCourses.map((course) => (
-                      <TableRow key={course._id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{course.title}</p>
-                            <p className="text-sm text-gray-500 line-clamp-1">{course.description}</p>
+                      <tr key={course._id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <img 
+                              src={course.thumbnail || "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=100&h=60&fit=crop"} 
+                              alt="" 
+                              className="w-12 h-8 rounded object-cover shadow-sm"
+                            />
+                            <div>
+                              <p className="font-semibold text-gray-900">{course.title}</p>
+                              <p className="text-xs text-gray-500 uppercase tracking-wider">{course.category} • {course.difficulty}</p>
+                            </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-sm">{course.teacher.username}</p>
-                            <p className="text-xs text-gray-500">{course.teacher.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={course.isPublished ? "default" : "secondary"}>
+                        </td>
+                        <td className="px-6 py-4 text-gray-600 font-medium">
+                          {course.teacherName}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {course.enrolledStudents}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge className={course.isPublished ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"} variant="secondary">
                             {course.isPublished ? "Published" : "Draft"}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{course.enrolledStudents}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{course.lessonsCount}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{new Date(course.createdAt).toLocaleDateString()}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </td>
+                        <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Link href={`/course/${course._id}`}>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
+                            <Link href={`/course/${course._id}`} target="_blank">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                                <ExternalLink className="h-4 w-4" />
                               </Button>
                             </Link>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => togglePublishStatus(course._id, course.isPublished)}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={course.isPublished ? "text-amber-600 hover:text-amber-700" : "text-green-600 hover:text-green-700"}
+                              onClick={() => handleTogglePublish(course._id, course.isPublished)}
                             >
-                              {course.isPublished ? "Unpublish" : "Publish"}
+                              {course.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </Button>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteCourse(course._id)}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
                               className="text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteCourse(course._id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     ))
                   )}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>

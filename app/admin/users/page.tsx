@@ -1,304 +1,191 @@
 "use client"
 
-
-
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { ArrowLeft, Search, Edit, Trash2, Users } from "lucide-react"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/hooks/use-auth"
-import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Trash2, Shield, UserX, UserCheck, Search, Mail } from "lucide-react"
+import { toast } from "sonner"
 
 interface User {
   _id: string
   username: string
   email: string
-  role: "student" | "teacher" | "admin"
-  coursesEnrolled: number
+  role: string
+  isActive: boolean
   createdAt: string
 }
 
-export default function AdminUsersPage() {
+export default function ManageUsersPage() {
   const [users, setUsers] = useState<User[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [roleFilter, setRoleFilter] = useState("all")
-  const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [newRole, setNewRole] = useState("")
   const { token } = useAuth()
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch("/api/admin/users", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setUsers(data.users || [])
-          setFilteredUsers(data.users || [])
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    if (token) {
-      fetchUsers()
-    }
-  }, [token])
-
-  useEffect(() => {
-    let filtered = users
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (user) =>
-          user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-    }
-
-    if (roleFilter !== "all") {
-      filtered = filtered.filter((user) => user.role === roleFilter)
-    }
-
-    setFilteredUsers(filtered)
-  }, [users, searchTerm, roleFilter])
-
-  const handleUpdateRole = async () => {
-    if (!editingUser || !newRole) return
-
+  const fetchUsers = async () => {
     try {
-      const response = await fetch(`/api/admin/users/${editingUser._id}/role`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role: newRole }),
+      const response = await fetch("/api/admin/users", {
+        headers: { Authorization: `Bearer ${token}` }
       })
-
       if (response.ok) {
-        setUsers(users.map((user) => (user._id === editingUser._id ? { ...user, role: newRole as any } : user)))
-        setEditingUser(null)
-        setNewRole("")
+        const data = await response.json()
+        setUsers(data.data.users || [])
       }
     } catch (error) {
-      console.error("Error updating user role:", error)
+      console.error("Error fetching users:", error)
+      toast.error("Failed to load users")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (token) fetchUsers()
+  }, [token])
+
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ userId, isActive: !currentStatus })
+      })
+      if (response.ok) {
+        toast.success(`User ${!currentStatus ? "activated" : "deactivated"} successfully`)
+        fetchUsers()
+      }
+    } catch (error) {
+      toast.error("Failed to update user status")
     }
   }
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-      return
-    }
+    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetch(`/api/admin/users?userId=${userId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` }
       })
-
       if (response.ok) {
-        setUsers(users.filter((user) => user._id !== userId))
+        toast.success("User deleted successfully")
+        fetchUsers()
       }
     } catch (error) {
-      console.error("Error deleting user:", error)
+      toast.error("Failed to delete user")
     }
   }
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "destructive"
-      case "teacher":
-        return "default"
-      case "student":
-        return "secondary"
-      default:
-        return "outline"
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading users...</p>
-        </div>
-      </div>
-    )
-  }
+  const filteredUsers = users.filter(user => 
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Link href="/admin/dashboard">
-            <Button variant="ghost" className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
-          <p className="text-gray-600">Manage user accounts and permissions</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Users</h1>
+            <p className="text-gray-600">Review and control all user accounts on the platform</p>
+          </div>
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
 
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  All Users ({filteredUsers.length})
-                </CardTitle>
-                <CardDescription>View and manage user accounts</CardDescription>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-4 mt-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="student">Students</SelectItem>
-                  <SelectItem value="teacher">Teachers</SelectItem>
-                  <SelectItem value="admin">Admins</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Courses</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                        No users found
-                      </TableCell>
-                    </TableRow>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600">User</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600">Role</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600">Status</th>
+                    <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {isLoading ? (
+                    [...Array(5)].map((_, i) => (
+                      <tr key={i}>
+                        <td className="px-6 py-4"><Skeleton className="h-10 w-40" /></td>
+                        <td className="px-6 py-4"><Skeleton className="h-6 w-20" /></td>
+                        <td className="px-6 py-4"><Skeleton className="h-6 w-16" /></td>
+                        <td className="px-6 py-4"><Skeleton className="h-8 w-24 ml-auto" /></td>
+                      </tr>
+                    ))
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-gray-500">No users found</td>
+                    </tr>
                   ) : (
                     filteredUsers.map((user) => (
-                      <TableRow key={user._id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{user.username}</p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
+                      <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-700 font-bold">
+                              {user.username.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{user.username}</p>
+                              <p className="text-sm text-gray-500 flex items-center gap-1">
+                                <Mail className="h-3 w-3" /> {user.email}
+                              </p>
+                            </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{user.coursesEnrolled} enrolled</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{new Date(user.createdAt).toLocaleDateString()}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant={user.role === "admin" ? "default" : user.role === "teacher" ? "secondary" : "outline"}>
+                            {user.role}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge className={user.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"} variant="secondary">
+                            {user.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingUser(user)
-                                    setNewRole(user.role)
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Edit User Role</DialogTitle>
-                                  <DialogDescription>Change the role for {editingUser?.username}</DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium">Role</label>
-                                    <Select value={newRole} onValueChange={setNewRole}>
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="student">Student</SelectItem>
-                                        <SelectItem value="teacher">Teacher</SelectItem>
-                                        <SelectItem value="admin">Admin</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="flex justify-end gap-2">
-                                    <Button variant="outline" onClick={() => setEditingUser(null)}>
-                                      Cancel
-                                    </Button>
-                                    <Button onClick={handleUpdateRole}>Update Role</Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteUser(user._id)}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className={user.isActive ? "text-amber-600 hover:text-amber-700" : "text-green-600 hover:text-green-700"}
+                              onClick={() => handleToggleStatus(user._id, user.isActive)}
+                              disabled={user.role === "admin"}
+                            >
+                              {user.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
                               className="text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteUser(user._id)}
+                              disabled={user.role === "admin"}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     ))
                   )}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>
