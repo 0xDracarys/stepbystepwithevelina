@@ -71,15 +71,15 @@ export default function HomePage() {
                 Pradėk mokytis jau šiandien!
               </div>
               
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 leading-tight">
                 Labas, aš Evelina — anglų kalbos mokytoja ir <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 animate-gradient-x">nuotolinės mokyklos kūrėja.</span> 👋
               </h1>
               
               <div className="space-y-4 mb-8 max-w-3xl">
-                <p className="text-xl text-gray-600 leading-relaxed">
+                <p className="text-lg text-gray-600 leading-relaxed">
                   Padedu suaugusiems mokytis anglų kalbos aiškiai, praktiškai ir be baimės kalbėti. Tikiu, kad kiekvienas gali išmokti kalbėti angliškai, kai mokymasis tampa suprantamas, pritaikytas realiam gyvenimui ir paremtas palaikymu, o ne spaudimu.
                 </p>
-                <p className="text-xl text-gray-600 leading-relaxed">
+                <p className="text-lg text-gray-600 leading-relaxed">
                   Savo pamokose daug dėmesio skiriu ne tik gramatikai, bet ir pasitikėjimui savimi kalbant. Man svarbu, kad mokiniai jaustųsi jaukiai, nebijotų klysti ir matytų tikrą progresą.
                 </p>
                 <div className="text-lg text-gray-600 leading-relaxed bg-white/60 p-4 rounded-xl shadow-sm border border-indigo-50">
@@ -90,20 +90,20 @@ export default function HomePage() {
                     <li>✨ palaikančią aplinką augti ir tobulėti.</li>
                   </ul>
                 </div>
-                <p className="text-xl font-medium text-indigo-700 leading-relaxed">
+                <p className="text-lg font-medium text-indigo-700 leading-relaxed">
                   Mano tikslas — padėti tau ne tik mokytis anglų kalbos, bet ir ja naudotis užtikrintai. 💌
                 </p>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <Link href="/auth/register">
-                  <Button size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                  <Button size="lg" className="text-base px-8 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
                     Start Learning Free
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="/courses">
-                  <Button className="btn-outline-primary text-lg px-8 py-6">
+                  <Button className="btn-outline-primary text-base px-8 py-5">
                     <Play className="mr-2 h-5 w-5" />
                     Watch Demo
                   </Button>
@@ -146,15 +146,10 @@ export default function HomePage() {
       <section className="py-20 px-4 bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <Badge className="mb-4 px-4 py-2 text-sm border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 bg-white">
-              <Zap className="h-4 w-4 mr-2" />
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
               Why Choose Step by Step English?
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Master Lithuanian ↔ English
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600"> the Smart Way</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Our specialized platform combines cutting-edge AI technology with proven learning methods 
               specifically designed for Lithuanian-English language pairs. Experience unparalleled learning that adapts to your pace and cultural context.
             </p>
