@@ -87,7 +87,20 @@ export default function AdminDashboard() {
 
         if (analyticsResponse.ok) {
           const analyticsData = await analyticsResponse.json()
-          setStats(analyticsData.data)
+          const statsData = analyticsData.data || analyticsData
+          if (statsData) {
+            setStats(prev => ({
+              ...prev,
+              ...statsData,
+              // Handle mapping if keys are different
+              totalUsers: statsData.totalUsers ?? prev.totalUsers,
+              totalCourses: statsData.totalCourses ?? prev.totalCourses,
+              totalEnrollments: statsData.totalEnrollments ?? prev.totalEnrollments,
+              averageCourseProgress: statsData.averageCourseProgress ?? prev.averageCourseProgress,
+              publishedCourses: statsData.publishedCourses ?? prev.publishedCourses,
+              draftCourses: statsData.draftCourses ?? prev.draftCourses,
+            }))
+          }
         }
 
         // Fetch recent users
@@ -99,7 +112,8 @@ export default function AdminDashboard() {
 
         if (usersResponse.ok) {
           const usersData = await usersResponse.json()
-          setRecentUsers(usersData.data.users || [])
+          const usersList = usersData.data?.users || usersData.users || []
+          setRecentUsers(usersList)
         }
 
         // Fetch recent courses
@@ -111,7 +125,8 @@ export default function AdminDashboard() {
 
         if (coursesResponse.ok) {
           const coursesData = await coursesResponse.json()
-          setRecentCourses(coursesData.data.courses || [])
+          const coursesList = coursesData.data?.courses || coursesData.courses || []
+          setRecentCourses(coursesList)
         }
       } catch (error) {
         console.error("Error fetching admin data:", error)

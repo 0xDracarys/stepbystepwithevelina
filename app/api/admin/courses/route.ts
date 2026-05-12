@@ -34,7 +34,13 @@ async function getAdminCoursesHandler(request: NextRequest) {
     .limit(limit)
     .lean()
 
-  return successResponse({ courses })
+  // Transform for frontend: convert enrolledStudents array to count
+  const transformedCourses = courses.map(course => ({
+    ...course,
+    enrolledStudents: course.enrolledStudents?.length || 0
+  }))
+
+  return successResponse({ courses: transformedCourses })
 }
 
 // PATCH update course (publish/unpublish)

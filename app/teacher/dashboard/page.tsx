@@ -77,24 +77,25 @@ export default function TeacherDashboard() {
 
         if (coursesResponse.ok) {
           const coursesData = await coursesResponse.json()
-          setCourses(coursesData.data.courses || [])
+          const coursesList = coursesData.data?.courses || coursesData.courses || []
+          setCourses(coursesList)
           
-          // Calculate stats
-          const totalStudents = coursesData.data.courses.reduce((sum: number, course: Course) => sum + course.enrolledStudents, 0)
-          const totalLessons = coursesData.data.courses.reduce((sum: number, course: Course) => sum + course.lessons.length, 0)
-          const publishedCourses = coursesData.data.courses.filter((course: Course) => course.isPublished).length
-          const averageRating = coursesData.data.courses.length > 0 
-            ? coursesData.data.courses.reduce((sum: number, course: Course) => sum + course.rating, 0) / coursesData.data.courses.length 
-            : 0
+          if (coursesList.length > 0) {
+            // Calculate stats
+            const totalStudents = coursesList.reduce((sum: number, course: Course) => sum + (course.enrolledStudents || 0), 0)
+            const totalLessons = coursesList.reduce((sum: number, course: Course) => sum + (course.lessons?.length || 0), 0)
+            const publishedCourses = coursesList.filter((course: Course) => course.isPublished).length
+            const averageRating = coursesList.reduce((sum: number, course: Course) => sum + (course.rating || 0), 0) / coursesList.length 
 
-          setStats({
-            totalCourses: coursesData.data.courses.length,
-            totalStudents,
-            totalLessons,
-            averageRating: Math.round(averageRating * 100) / 100,
-            publishedCourses,
-            draftCourses: coursesData.data.courses.length - publishedCourses
-          })
+            setStats({
+              totalCourses: coursesList.length,
+              totalStudents,
+              totalLessons,
+              averageRating: Math.round(averageRating * 100) / 100,
+              publishedCourses,
+              draftCourses: coursesList.length - publishedCourses
+            })
+          }
         }
       } catch (error) {
         console.error("Error fetching teacher data:", error)
