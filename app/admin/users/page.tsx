@@ -107,10 +107,10 @@ export default function ManageUsersPage() {
           </div>
         </div>
 
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto scrollbar-hide">
+              <table className="w-full text-left min-w-[600px]">
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-4 text-sm font-semibold text-gray-600">User</th>

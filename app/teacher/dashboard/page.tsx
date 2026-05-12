@@ -159,7 +159,7 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -210,7 +210,7 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
             <Link href="/teacher/course/create">
               <CardContent className="p-6 text-center">
@@ -272,7 +272,7 @@ export default function TeacherDashboard() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
                 <Card key={course._id} className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                   <CardHeader>
